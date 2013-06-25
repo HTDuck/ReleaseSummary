@@ -1,0 +1,23 @@
+.app {
+     margin:5px;
+}
+.combobox {
+	float: left;
+    margin: 5px;
+    display: inline;
+}
+.print-button {
+	float: left;
+    margin: 5px;
+	display: inline;
+}
+.gridTitle {
+    margin: 25px 17px 5px;
+    font-size:1.125em;
+}
+.grid {
+    margin:5px;
+}
+.releaseInfo {
+    margin-left:5px;
+}
