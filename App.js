@@ -38,7 +38,10 @@ Ext.define('CustomApp', {
         this.down('#headerContainer').add({
             xtype: 'rallyreleasecombobox',
             itemId: 'releaseComboBox',
-            componentCls: 'combobox',
+            fieldLabel: 'Select Release: ',
+            width: 310,
+            labelWidth: 100,
+            //componentCls: 'combobox',
             listeners: {
                 change: this._query,
                 ready: this._query,
@@ -196,34 +199,34 @@ Ext.define('CustomApp', {
     },
 
     _onButtonPressed: function() {
-        var title, options;
-        //var css = document.getElementsByTagName('style')[0].innerHTML;
+        var release = this.down('#releaseComboBox').getRawValue();
+        var title = release, options;
+
+        // code to get the style that we added in the app.css file
         var css = document.getElementsByTagName('style')[0].innerHTML;
 
 
         
-        //title = this.releaseComboBox.rawValue;
         options = "toolbar=1,menubar=1,scrollbars=yes,scrolling=yes,resizable=yes,width=1000,height=500";
         var printWindow = window.open('', '', options);
 
         var doc = printWindow.document;
 
 
-
-        var header = this.down('#headerContainer');
+        var header = this.down('#releaseComboBox');
         var storytitle = this.down('#storyGridTitle');
         var storygrid = this.down('#storyGrid');
         var defecttitle = this.down('#defectGridTitle');
         var defectgrid = this.down('#defectGrid');
         var releaseinfo = this.down('#releaseInfo');
 
+        
 
-        //doc.write('<html><head>' + css + '<title>' + '' + '</title>');
-        doc.write('<html><head>' + '<style>' + css + '</style>');
+        doc.write('<html><head>' + '<style>' + css + '</style><title>' + title + '</title>');
 
 
         doc.write('</head><body class="landscape">');
-        doc.write(header.getEl().dom.innerHTML);
+        doc.write('<p>Release: ' + release + '</p><br />');
         doc.write(storytitle.getEl().dom.innerHTML);
         doc.write(storygrid.getEl().dom.innerHTML);
         doc.write(defecttitle.getEl().dom.innerHTML);
