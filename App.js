@@ -13,20 +13,10 @@ Ext.define('CustomApp', {
         itemId: 'headerContainer'
     }, {
         xtype: 'container',
-        itemId: 'storyGridTitle',
-        componentCls: 'gridTitle'
+        itemId: 'stories'
     }, {
         xtype: 'container',
-        itemId: 'storyGrid',
-        componentCls: 'grid'
-    }, {
-        xtype: 'container',
-        itemId: 'defectGridTitle',
-        componentCls: 'gridTitle'
-    }, {
-        xtype: 'container',
-        itemId: 'defectGrid',
-        componentCls: 'grid'
+        itemId: 'defects'
     }, {
         xtype: 'container',
         itemId: 'releaseInfo',
@@ -41,7 +31,6 @@ Ext.define('CustomApp', {
             fieldLabel: 'Select Release: ',
             width: 310,
             labelWidth: 100,
-            //componentCls: 'combobox',
             listeners: {
                 change: this._query,
                 ready: this._query,
@@ -111,9 +100,9 @@ Ext.define('CustomApp', {
         var records = [],
             rankIndex = 1;
         Ext.Array.each(data, function (record) {
-            //debugger;
             records.push({
-                FormattedID: '<a href="' + Rally.nav.Manager.getDetailUrl(record.get('_ref')) + '" target="_top">' + record.get('FormattedID') + '</a>',
+                FormattedID: '<a href="' + Rally.nav.Manager.getDetailUrl(record.get('_ref')) + 
+                    '" target="_top">' + record.get('FormattedID') + '</a>',
                 Name: record.get('Name'),
                 ScheduleState: record.get('ScheduleState')
             });
@@ -124,11 +113,17 @@ Ext.define('CustomApp', {
             pageSize: 25
         });
 
-        this.down('#storyGridTitle').update('<p><b>Stories: ' + records.length + '</b><br /></p>');
+        this.down('#stories').add({
+            xtype: 'displayfield',
+            value: '<b><p style="font-size:14px">Stories: ' + records.length + '</p></b><br />',
+            componentCls: 'gridTitle'
+        });
+
 
         if (!this.storyGrid) {
-            this.storyGrid = this.down('#storyGrid').add({
+            this.storyGrid = this.down('#stories').add({
                 xtype: 'rallygrid',
+                componentCls: 'grid',
                 store: customStore,
                 columnCfgs: [{
                     text: 'ID',
@@ -164,11 +159,17 @@ Ext.define('CustomApp', {
             pageSize: 25
         });
 
-        this.down('#defectGridTitle').update('<p><b>Defects: ' + records.length + '</b><br /></p>');
+        this.down('#defects').add({
+            xtype: 'displayfield',
+            value: '<b><p style="font-size:14px">Defects: ' + records.length + '</p></b><br />',
+            componentCls: 'gridTitle'
+        });
+
 
         if (!this.defectGrid) {
-            this.defectGrid = this.down('#defectGrid').add({
+            this.defectGrid = this.down('#defects').add({
                 xtype: 'rallygrid',
+                componentCls: 'grid',
                 store: customStore,
                 columnCfgs: [{
                     text: 'ID',
@@ -188,6 +189,8 @@ Ext.define('CustomApp', {
         }
     },
 
+
+    // adding the print button to gear menu in the Rally site
     getOptions: function() {
         return [
         {
@@ -202,36 +205,22 @@ Ext.define('CustomApp', {
         var release = this.down('#releaseComboBox').getRawValue();
         var title = release, options;
 
-        // code to get the style that we added in the app.css file
         var css = document.getElementsByTagName('style')[0].innerHTML;
-
-
         
         options = "toolbar=1,menubar=1,scrollbars=yes,scrolling=yes,resizable=yes,width=1000,height=500";
         var printWindow = window.open('', '', options);
 
         var doc = printWindow.document;
 
-
-        var header = this.down('#releaseComboBox');
-        var storytitle = this.down('#storyGridTitle');
-        var storygrid = this.down('#storyGrid');
-        var defecttitle = this.down('#defectGridTitle');
-        var defectgrid = this.down('#defectGrid');
+        var stories = this.down('#stories');
+        var defects = this.down('#defects');
         var releaseinfo = this.down('#releaseInfo');
-
-        
 
         doc.write('<html><head>' + '<style>' + css + '</style><title>' + title + '</title>');
 
-
         doc.write('</head><body class="landscape">');
         doc.write('<p>Release: ' + release + '</p><br />');
-        doc.write(storytitle.getEl().dom.innerHTML);
-        doc.write(storygrid.getEl().dom.innerHTML);
-        doc.write(defecttitle.getEl().dom.innerHTML);
-        doc.write(defectgrid.getEl().dom.innerHTML);
-        doc.write(releaseinfo.getEl().dom.innerHTML);
+        doc.write(stories.getEl().dom.innerHTML + defects.getEl().dom.innerHTML + releaseinfo.getEl().dom.innerHTML);
         doc.write('</body></html>');
         doc.close();
 
@@ -241,6 +230,7 @@ Ext.define('CustomApp', {
 
     },
 
+    // source code to get the Rally CSS
     _injectContent: function(html, elementType, attributes, container, printWindow){
         elementType = elementType || 'div';
         container = container || printWindow.document.getElementsByTagName('body')[0];
@@ -263,7 +253,6 @@ Ext.define('CustomApp', {
     },
 
     _injectCSS: function(printWindow){
-        //find all the stylesheets on the current page and inject them into the new page
         Ext.each(Ext.query('link'), function(stylesheet){
                 this._injectContent('', 'link', {
                 rel: 'stylesheet',
@@ -271,6 +260,5 @@ Ext.define('CustomApp', {
                 type: 'text/css'
             }, printWindow.document.getElementsByTagName('head')[0], printWindow);
         }, this);
-
     }
 });
