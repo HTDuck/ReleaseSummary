@@ -113,11 +113,16 @@ Ext.define('CustomApp', {
             pageSize: 25
         });
 
-        this.down('#stories').add({
-            xtype: 'displayfield',
-            value: '<b><p style="font-size:14px">Stories: ' + records.length + '</p></b><br />',
-            componentCls: 'gridTitle'
-        });
+        if (!this.down('#story-title')) {
+            this.storyField = this.down('#stories').add({
+                xtype: 'displayfield',
+                itemId: 'story-title',
+                value: '<b><p style="font-size:14px">Stories: ' + records.length + '</p></b><br />',
+                componentCls: 'gridTitle'
+            });
+        } else {
+            this.storyField.update('<b><p style="font-size:14px">Stories: ' + records.length + '</p></b><br />');
+        }
 
 
         if (!this.storyGrid) {
@@ -159,11 +164,16 @@ Ext.define('CustomApp', {
             pageSize: 25
         });
 
-        this.down('#defects').add({
-            xtype: 'displayfield',
-            value: '<b><p style="font-size:14px">Defects: ' + records.length + '</p></b><br />',
-            componentCls: 'gridTitle'
-        });
+        if (!this.down('#defect-title')) {
+            this.defectField = this.down('#defects').add({
+                xtype: 'displayfield',
+                itemId: 'defect-title',
+                value: '<b><p style="font-size:14px">Defects: ' + records.length + '</p></b><br />',
+                componentCls: 'gridTitle'
+            });
+        } else {
+            this.defectField.update('<b><p style="font-size:14px">Defects: ' + records.length + '</p></b><br />');
+        }
 
 
         if (!this.defectGrid) {
