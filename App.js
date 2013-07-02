@@ -1,12 +1,6 @@
 Ext.define('CustomApp', {
     extend: 'Rally.app.App',
     componentCls: 'app',
-    plugins: [
-        {
-            ptype: 'rallyprint',
-            defaultTitle: ''
-        }
-    ],
 
     items: [{
         xtype: 'container',
@@ -113,10 +107,10 @@ Ext.define('CustomApp', {
             pageSize: 25
         });
 
-        if (!this.down('#story-title')) {
+        //if (!this.down('#story-title')) {
+        if (!this.storyField) {
             this.storyField = this.down('#stories').add({
                 xtype: 'displayfield',
-                itemId: 'story-title',
                 value: '<b><p style="font-size:14px">Stories: ' + records.length + '</p></b><br />',
                 componentCls: 'gridTitle'
             });
@@ -164,10 +158,9 @@ Ext.define('CustomApp', {
             pageSize: 25
         });
 
-        if (!this.down('#defect-title')) {
+        if (!this.defectField) {
             this.defectField = this.down('#defects').add({
                 xtype: 'displayfield',
-                itemId: 'defect-title',
                 value: '<b><p style="font-size:14px">Defects: ' + records.length + '</p></b><br />',
                 componentCls: 'gridTitle'
             });
