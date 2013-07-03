@@ -31,27 +31,21 @@ Ext.define('CustomApp', {
                 scope: this
             }
         });
-
+        
+        this._releaseTemplate = new Ext.Template('<p><b>About this release: </b><br />' +
+              'Additional information is available <a href="{detailUrl}" target="_top">here.</a></p>');
     },
 
     _query: function () {
         var customFilter = Ext.create('Rally.data.QueryFilter', {
             property: 'ScheduleState',
-            operator: '=',
+            operator: '>=',
             value: 'Accepted'
-        });
-        customFilter =customFilter.or(Ext.create('Rally.data.QueryFilter', {
-            property: 'ScheduleState',
-            operator: '=',
-            value: 'Released'
-        }));
-
-
-        customFilter = customFilter.and(Ext.create('Rally.data.QueryFilter', {
+        }).and({
             property: 'Release.Name',
             operator: '=',
             value: this.down('#releaseComboBox').getRawValue()
-        }));
+        });
         
         Ext.create('Rally.data.WsapiDataStore', {
             model: 'UserStory',
@@ -65,9 +59,9 @@ Ext.define('CustomApp', {
             listeners: {
                 load: this._onStoriesDataLoaded,
                 scope: this
-            }
+            },
+            pageSize: 25
         });
-
 
         Ext.create('Rally.data.WsapiDataStore', {
             model: 'Defect',
@@ -81,126 +75,76 @@ Ext.define('CustomApp', {
             listeners: {
                 load: this._onDefectsDataLoaded,
                 scope: this
-            }
-        });
-        
-        this.down('#releaseInfo').update('<p><b>About this release: </b><br />' +
-              'Additional information is available <a href="' + 
-              Rally.nav.Manager.getDetailUrl(this.down('#releaseComboBox').getValue()) + 
-              '" target="_top">here.</a></p>');
-    },
-
-    _onStoriesDataLoaded: function (store, data) {
-        var records = [],
-            rankIndex = 1;
-        Ext.Array.each(data, function (record) {
-            records.push({
-                FormattedID: '<a href="' + Rally.nav.Manager.getDetailUrl(record.get('_ref')) + 
-                    '" target="_top">' + record.get('FormattedID') + '</a>',
-                Name: record.get('Name'),
-                ScheduleState: record.get('ScheduleState')
-            });
-        });
-
-        var customStore = Ext.create('Rally.data.custom.Store', {
-            data: records,
+            },
             pageSize: 25
         });
 
-        //if (!this.down('#story-title')) {
-        if (!this.storyField) {
-            this.storyField = this.down('#stories').add({
+        this.down('#releaseInfo').update(this._releaseTemplate.apply({
+            detailUrl: Rally.nav.Manager.getDetailUrl(this.down('#releaseComboBox').getValue())
+        }));
+    },
+
+    _onStoriesDataLoaded: function (store, data) {
+        if (!this.down('#story-title')) {
+            this.down('#stories').add({
                 xtype: 'displayfield',
-                value: '<b><p style="font-size:14px">Stories: ' + records.length + '</p></b><br />',
+                itemId: 'story-title',
+                value: 'Stories: ' + store.totalCount,
                 componentCls: 'gridTitle'
             });
         } else {
-            this.storyField.update('<b><p style="font-size:14px">Stories: ' + records.length + '</p></b><br />');
+            this.down('#story-title').update('Stories: ' + store.totalCount);
         }
 
-
-        if (!this.storyGrid) {
-            this.storyGrid = this.down('#stories').add({
-                xtype: 'rallygrid',
-                componentCls: 'grid',
-                store: customStore,
-                columnCfgs: [{
-                    text: 'ID',
-                    dataIndex: 'FormattedID'
-                }, {
-                    text: 'Name',
-                    dataIndex: 'Name',
-                    flex: 3
-                }, {
-                    text: 'Schedule State',
-                    dataIndex: 'ScheduleState',
-                    flex: 1
-                }]
-            });
+        if (!this.down('#story-grid')) {
+            this._buildGrid(store, '#stories', 'story-grid');
         } else {
-            this.storyGrid.reconfigure(customStore);
+            this.down('#story-grid').reconfigure(store);
         }
     },
 
     _onDefectsDataLoaded: function (store, data) {
-        var records = [],
-            rankIndex = 1;
-        Ext.Array.each(data, function (record) {
-            records.push({
-                FormattedID: '<a href="' + Rally.nav.Manager.getDetailUrl(record.get('_ref')) + '" target="_top">' + record.get('FormattedID') + '</a>',
-                Name: record.get('Name'),
-                ScheduleState: record.get('ScheduleState')
-            });
-        });
-
-        var customStore = Ext.create('Rally.data.custom.Store', {
-            data: records,
-            pageSize: 25
-        });
-
-        if (!this.defectField) {
-            this.defectField = this.down('#defects').add({
+        if (!this.down('#defect-title')) {
+            this.down('#defects').add({
                 xtype: 'displayfield',
-                value: '<b><p style="font-size:14px">Defects: ' + records.length + '</p></b><br />',
+                itemId: 'defect-title',
+                value: 'Defects: ' + store.totalCount,
                 componentCls: 'gridTitle'
             });
         } else {
-            this.defectField.update('<b><p style="font-size:14px">Defects: ' + records.length + '</p></b><br />');
+            this.down('#defect-title').update('Defects: ' + store.totalCount);
         }
 
-
-        if (!this.defectGrid) {
-            this.defectGrid = this.down('#defects').add({
-                xtype: 'rallygrid',
-                componentCls: 'grid',
-                store: customStore,
-                columnCfgs: [{
-                    text: 'ID',
-                    dataIndex: 'FormattedID'
-                }, {
-                    text: 'Name',
-                    dataIndex: 'Name',
-                    flex: 3
-                }, {
-                    text: 'Schedule State',
-                    dataIndex: 'ScheduleState',
-                    flex: 1
-                }]
-            });
+        if (!this.down('#defect-grid')) {
+            this._buildGrid(store, '#defects', 'defect-grid');
         } else {
-            this.defectGrid.reconfigure(customStore);
+            this.down('#defect-grid').reconfigure(store);
         }
     },
 
+    _buildGrid: function(store, containerName, itemId) {
+        this.down(containerName).add({
+            xtype: 'rallygrid',
+            componentCls: 'grid',
+            itemId: itemId,
+            store: store,
+            columnCfgs: [
+                {text: 'ID', dataIndex: 'FormattedID', xtype: 'templatecolumn',
+                    tpl: Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')}, 
+                {text: 'Name', dataIndex: 'Name', flex: 3}, 
+                {text: 'Schedule State', dataIndex: 'ScheduleState', flex: 1}
+            ]
+        });
+    },
 
     // adding the print button to gear menu in the Rally site
     getOptions: function() {
         return [
-        {
-            text: 'Print',
-            handler: this._onButtonPressed,
-            scope: this
-        }
+            {
+                text: 'Print',
+                handler: this._onButtonPressed,
+                scope: this
+            }
         ];
     },
 
