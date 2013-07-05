@@ -184,7 +184,7 @@ Ext.define('Rally.apps.releasesummary.App', {
         doc.write('<html><head>' + '<style>' + css + '</style><title>' + title + '</title>');
 
         doc.write('</head><body class="landscape">');
-        doc.write('<p>Release: ' + release + '</p><br />');
+        doc.write('<p style="font-family:Arial,Helvetica,sans-serif;margin:5px">Release: ' + release + '</p><br />');
         doc.write(stories.getEl().dom.innerHTML + defects.getEl().dom.innerHTML + releaseinfo.getEl().dom.innerHTML);
         doc.write('</body></html>');
         doc.close();
