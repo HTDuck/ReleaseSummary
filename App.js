@@ -1,57 +1,44 @@
-Ext.define('CustomApp', {
-    extend: 'Rally.app.App',
+Ext.define('Rally.apps.releasesummary.App', {
+    extend: 'Rally.app.TimeboxScopedApp',
     componentCls: 'app',
+    scopeType: 'release',
 
-    items: [{
-        xtype: 'container',
-        itemId: 'headerContainer'
-    }, {
-        xtype: 'container',
-        itemId: 'stories'
-    }, {
-        xtype: 'container',
-        itemId: 'defects'
-    }, {
-        xtype: 'container',
-        itemId: 'releaseInfo',
-        componentCls: 'releaseInfo'
-    }],
-
-
-    launch: function () {
-        this.down('#headerContainer').add({
-            xtype: 'rallyreleasecombobox',
-            itemId: 'releaseComboBox',
-            fieldLabel: 'Select Release: ',
-            width: 310,
-            labelWidth: 100,
-            listeners: {
-                change: this._query,
-                ready: this._query,
-                scope: this
-            }
+    addContent: function () {
+        this.add({
+            xtype: 'container',
+            itemId: 'releaseInfo',
+            componentCls: 'releaseInfo'
+        }, {
+            xtype: 'container',
+            itemId: 'stories'
+        }, {
+            xtype: 'container',
+            itemId: 'defects'
         });
-        
+
         this._releaseTemplate = new Ext.Template('<p><b>About this release: </b><br />' +
               'Additional information is available <a href="{detailUrl}" target="_top">here.</a></p>');
+
+        this._query();
+    },
+
+    onScopeChange: function() {
+        this._query();
     },
 
     _query: function () {
-        var customFilter = Ext.create('Rally.data.QueryFilter', {
-            property: 'ScheduleState',
-            operator: '>=',
-            value: 'Accepted'
-        }).and({
-            property: 'Release.Name',
-            operator: '=',
-            value: this.down('#releaseComboBox').getRawValue()
-        });
-        
         Ext.create('Rally.data.WsapiDataStore', {
             model: 'UserStory',
             autoLoad: true,
             fetch: ['FormattedID', 'Name', 'ScheduleState'],
-            filters: customFilter,
+            filters: [
+                {
+                    property: 'ScheduleState',
+                    operator: '>=',
+                    value: 'Accepted'
+                },
+                this.getContext().getTimeboxScope().getQueryFilter()
+            ],
             sorters: [{
                 property: 'FormattedID',
                 direction: 'ASC'
@@ -63,11 +50,19 @@ Ext.define('CustomApp', {
             pageSize: 25
         });
 
+
         Ext.create('Rally.data.WsapiDataStore', {
             model: 'Defect',
             autoLoad: true,
             fetch: ['FormattedID', 'Name', 'ScheduleState'],
-            filters: customFilter,
+            filters: [
+                {
+                    property: 'ScheduleState',
+                    operator: '>=',
+                    value: 'Accepted'
+                },
+                this.getContext().getTimeboxScope().getQueryFilter()
+            ],
             sorters: [{
                 property: 'FormattedID',
                 direction: 'ASC'
@@ -80,11 +75,12 @@ Ext.define('CustomApp', {
         });
 
         this.down('#releaseInfo').update(this._releaseTemplate.apply({
-            detailUrl: Rally.nav.Manager.getDetailUrl(this.down('#releaseComboBox').getValue())
+            detailUrl: Rally.nav.Manager.getDetailUrl(this.getContext().getTimeboxScope().getRecord())
         }));
     },
 
     _onStoriesDataLoaded: function (store, data) {
+
         if (!this.down('#story-title')) {
             this.down('#stories').add({
                 xtype: 'displayfield',
@@ -137,7 +133,6 @@ Ext.define('CustomApp', {
         });
     },
 
-    // adding the print button to gear menu in the Rally site
     getOptions: function() {
         return [
             {
@@ -149,7 +144,7 @@ Ext.define('CustomApp', {
     },
 
     _onButtonPressed: function() {
-        var release = this.down('#releaseComboBox').getRawValue();
+        var release = this.getContext().getTimeboxScope().getRecord().get('Name');
         var title = release, options;
 
         var css = document.getElementsByTagName('style')[0].innerHTML;
