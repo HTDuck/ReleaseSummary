@@ -4,133 +4,156 @@ Ext.define('Rally.apps.releasesummary.App', {
     scopeType: 'release',
 
     addContent: function () {
-        this.add({
-            xtype: 'container',
-            itemId: 'releaseInfo',
-            componentCls: 'releaseInfo'
-        }, {
-            xtype: 'container',
-            itemId: 'stories'
-        }, {
-            xtype: 'container',
-            itemId: 'defects'
+        this.callParent(arguments);
+
+        Rally.data.ModelFactory.getModels({
+            types: ['UserStory', 'Defect'],
+            success: function(models) {
+                this.models = models;
+                this._addContent();
+            },
+            scope: this
         });
+    },
 
-        this._releaseTemplate = new Ext.Template('<p><b>About this release: </b><br />' +
-              'Additional information is available <a href="{detailUrl}" target="_top">here.</a></p>');
+    _addContent: function() {
+        this.add(
+            {
+                xtype: 'component',
+                itemId: 'releaseInfo',
+                componentCls: 'releaseInfo',
+                tpl: [
+                    '<p><b>About this release: </b><br />',
+                    '<p class="release-notes">{notes}</p>',
+                    'Additional information is available <a href="{detailUrl}" target="_top">here.</a></p>'
+                ]
+            }, 
+            {
+                xtype: 'container',
+                itemId: 'stories',
+                items: [{
+                    xtype: 'displayfield',
+                    itemId: 'story-title',
+                    componentCls: 'gridTitle',
+                    value: 'Stories:'
+                }]
+            }, 
+            {
+                xtype: 'container',
+                itemId: 'defects',
+                items: [{
+                    xtype: 'displayfield',
+                    itemId: 'defect-title',
+                    value: 'Defects:',
+                    componentCls: 'gridTitle'
+                }]
+            }
+        );
 
-        this._query();
+        this._buildGrids();
+        this._loadReleaseDetails();
     },
 
     onScopeChange: function() {
-        this._query();
+        this.callParent(arguments);
+
+        this._refreshGrids();
+        this._loadReleaseDetails();
     },
 
-    _query: function () {
-        Ext.create('Rally.data.WsapiDataStore', {
-            model: 'UserStory',
-            autoLoad: true,
-            fetch: ['FormattedID', 'Name', 'ScheduleState'],
-            filters: [
-                {
-                    property: 'ScheduleState',
-                    operator: '>=',
-                    value: 'Accepted'
-                },
-                this.getContext().getTimeboxScope().getQueryFilter()
-            ],
-            sorters: [{
-                property: 'FormattedID',
-                direction: 'ASC'
-            }],
+    _loadReleaseDetails: function() {
+        var release = this.getContext().getTimeboxScope().getRecord();
+        var releaseModel = release.self;
+
+        releaseModel.load(Rally.util.Ref.getOidFromRef(release), {
+            fetch: ['Notes'],
+            success: function(record) {
+                this.down('#releaseInfo').update({
+                    detailUrl: Rally.nav.Manager.getDetailUrl(release),
+                    notes: record.get('Notes')
+                });
+            },
+            scope: this    
+        });
+    },
+
+    _buildGrids: function() {
+        var storyStoreConfig = this._getStoreConfig({
+            model: this.models.UserStory,
             listeners: {
                 load: this._onStoriesDataLoaded,
                 scope: this
-            },
-            pageSize: 25
+            }
         });
+        this.down('#stories').add(this._getGridConfig({
+            itemId: 'story-grid',
+            model: this.models.UserStory,
+            storeConfig: storyStoreConfig
+        }));
 
+        var defectStoreConfig = this._getStoreConfig({
+             model: this.models.Defect,
+             listeners: {
+                load: this._onDefectsDataLoaded,
+                scope: this
+            }
+        });
+        this.down('#defects').add(this._getGridConfig({
+            itemId: 'defect-grid',
+            model: this.models.Defect,
+            storeConfig: defectStoreConfig
+        }));
+    },
 
-        Ext.create('Rally.data.WsapiDataStore', {
-            model: 'Defect',
+    _getStoreConfig: function(storeConfig) {
+        return Ext.apply({
             autoLoad: true,
             fetch: ['FormattedID', 'Name', 'ScheduleState'],
-            filters: [
-                {
-                    property: 'ScheduleState',
-                    operator: '>=',
-                    value: 'Accepted'
-                },
-                this.getContext().getTimeboxScope().getQueryFilter()
-            ],
+            filters: this._getFilters(),
             sorters: [{
                 property: 'FormattedID',
                 direction: 'ASC'
             }],
-            listeners: {
-                load: this._onDefectsDataLoaded,
-                scope: this
-            },
             pageSize: 25
-        });
-
-        this.down('#releaseInfo').update(this._releaseTemplate.apply({
-            detailUrl: Rally.nav.Manager.getDetailUrl(this.getContext().getTimeboxScope().getRecord())
-        }));
+        }, storeConfig);
     },
 
-    _onStoriesDataLoaded: function (store, data) {
-
-        if (!this.down('#story-title')) {
-            this.down('#stories').add({
-                xtype: 'displayfield',
-                itemId: 'story-title',
-                value: 'Stories: ' + store.totalCount,
-                componentCls: 'gridTitle'
-            });
-        } else {
-            this.down('#story-title').update('Stories: ' + store.totalCount);
-        }
-
-        if (!this.down('#story-grid')) {
-            this._buildGrid(store, '#stories', 'story-grid');
-        } else {
-            this.down('#story-grid').reconfigure(store);
-        }
+    _getFilters: function() {
+        return [
+            {
+                property: 'ScheduleState',
+                operator: '>=',
+                value: 'Accepted'
+            },
+            this.getContext().getTimeboxScope().getQueryFilter()
+        ];
     },
 
-    _onDefectsDataLoaded: function (store, data) {
-        if (!this.down('#defect-title')) {
-            this.down('#defects').add({
-                xtype: 'displayfield',
-                itemId: 'defect-title',
-                value: 'Defects: ' + store.totalCount,
-                componentCls: 'gridTitle'
-            });
-        } else {
-            this.down('#defect-title').update('Defects: ' + store.totalCount);
-        }
-
-        if (!this.down('#defect-grid')) {
-            this._buildGrid(store, '#defects', 'defect-grid');
-        } else {
-            this.down('#defect-grid').reconfigure(store);
-        }
-    },
-
-    _buildGrid: function(store, containerName, itemId) {
-        this.down(containerName).add({
+    _getGridConfig: function(config) {
+        return Ext.apply({
             xtype: 'rallygrid',
             componentCls: 'grid',
-            itemId: itemId,
-            store: store,
             columnCfgs: [
                 {text: 'ID', dataIndex: 'FormattedID', xtype: 'templatecolumn',
                     tpl: Ext.create('Rally.ui.renderer.template.FormattedIDTemplate')}, 
                 {text: 'Name', dataIndex: 'Name', flex: 3}, 
                 {text: 'Schedule State', dataIndex: 'ScheduleState', flex: 1}
             ]
-        });
+        }, config);
+    },
+
+    _refreshGrids: function() {
+        var filters = this._getFilters();
+        this.down('#defect-grid').filter(filters, true, true);
+        this.down('#story-grid').filter(filters, true, true);
+    },
+
+    _onStoriesDataLoaded: function (store) {
+        this.down('#story-title').update('Stories: ' + store.getTotalCount());
+    },
+
+    _onDefectsDataLoaded: function (store) {
+        this.down('#defect-title').update('Defects: ' + store.getTotalCount());
     },
 
     getOptions: function() {

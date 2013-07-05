@@ -6,18 +6,12 @@
 	margin: 5px;
 }
 
-.print-button {
-	float: left;
-    margin: 5px;
-	display: inline;
-}
-
 .grid {
     margin:5px;
 }
 
 .releaseInfo {
-    margin-left:5px;
+    margin-left:30px;
 }
 
 /* stuff in display fields... we need both for some reason */
@@ -30,4 +24,8 @@
 .x-form-display-field{
 	font-weight: bold;
 	font-size: 14px;
+}
+
+.release-notes {
+	margin: 10px;
 }
