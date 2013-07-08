@@ -4,8 +4,6 @@ Ext.define('Rally.apps.releasesummary.App', {
     scopeType: 'release',
 
     addContent: function () {
-        this.callParent(arguments);
-
         Rally.data.ModelFactory.getModels({
             types: ['UserStory', 'Defect'],
             success: function(models) {
@@ -55,8 +53,6 @@ Ext.define('Rally.apps.releasesummary.App', {
     },
 
     onScopeChange: function() {
-        this.callParent(arguments);
-
         this._refreshGrids();
         this._loadReleaseDetails();
     },
@@ -173,7 +169,13 @@ Ext.define('Rally.apps.releasesummary.App', {
         var css = document.getElementsByTagName('style')[0].innerHTML;
         
         options = "toolbar=1,menubar=1,scrollbars=yes,scrolling=yes,resizable=yes,width=1000,height=500";
-        var printWindow = window.open('', '', options);
+        
+        var printWindow;
+        if (Ext.isIE) {
+            printWindow = window.open();
+        } else {
+            printWindow = window.open('', title, options);
+        }
 
         var doc = printWindow.document;
 
