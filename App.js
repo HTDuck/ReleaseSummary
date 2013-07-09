@@ -33,7 +33,7 @@ Ext.define('Rally.apps.releasesummary.App', {
                     xtype: 'displayfield',
                     itemId: 'story-title',
                     componentCls: 'gridTitle',
-                    value: 'Stories:'
+                    value: '            Stories:'
                 }]
             }, 
             {
