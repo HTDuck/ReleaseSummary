@@ -2,6 +2,11 @@ Ext.define('Rally.apps.releasesummary.App', {
     extend: 'Rally.app.TimeboxScopedApp',
     componentCls: 'app',
     scopeType: 'release',
+    comboboxConfig: {
+        fieldLabel: 'Release:',
+        labelWidth: 70,
+        width: 300
+    },
 
     addContent: function () {
         Rally.data.ModelFactory.getModels({
