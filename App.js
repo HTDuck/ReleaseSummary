@@ -198,7 +198,13 @@ Ext.define('Rally.apps.releasesummary.App', {
 
         this._injectCSS(printWindow);
 
-        printWindow.print();
+        if (Ext.isSafari) {
+            var timeout = setTimeout(function() {
+                printWindow.print();
+            }, 500);
+        } else {
+            printWindow.print();
+        }
 
     },
 
