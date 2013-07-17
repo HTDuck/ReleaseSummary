@@ -22,32 +22,31 @@ Ext.define('Rally.apps.releasesummary.App', {
     _addContent: function() {
         this.add(
             {
-                xtype: 'component',
+                xtype: 'container',
                 itemId: 'releaseInfo',
-                componentCls: 'releaseInfo',
                 tpl: [
-                    '<p><b>About this release: </b><br />',
+                    '<div class="releaseInfo"><p><b>About this release: </b><br />',
                     '<p class="release-notes">{notes}</p>',
-                    'Additional information is available <a href="{detailUrl}" target="_top">here.</a></p>'
+                    'Additional information is available <a href="{detailUrl}" target="_top">here.</a></p></div>'
                 ]
             }, 
             {
                 xtype: 'container',
                 itemId: 'stories',
                 items: [{
-                    xtype: 'displayfield',
+                    xtype: 'label',
                     itemId: 'story-title',
                     componentCls: 'gridTitle',
-                    value: '            Stories:'
+                    text: 'Stories:'
                 }]
             }, 
             {
                 xtype: 'container',
                 itemId: 'defects',
                 items: [{
-                    xtype: 'displayfield',
+                    xtype: 'label',
                     itemId: 'defect-title',
-                    value: 'Defects:',
+                    text: 'Defects:',
                     componentCls: 'gridTitle'
                 }]
             }
@@ -110,7 +109,7 @@ Ext.define('Rally.apps.releasesummary.App', {
         return Ext.apply({
             autoLoad: true,
             fetch: ['FormattedID', 'Name', 'ScheduleState'],
-            filters: this._getFilters(),
+            filters: [this.getContext().getTimeboxScope().getQueryFilter()],
             sorters: [{
                 property: 'FormattedID',
                 direction: 'ASC'
@@ -119,16 +118,6 @@ Ext.define('Rally.apps.releasesummary.App', {
         }, storeConfig);
     },
 
-    _getFilters: function() {
-        return [
-            {
-                property: 'ScheduleState',
-                operator: '>=',
-                value: 'Accepted'
-            },
-            this.getContext().getTimeboxScope().getQueryFilter()
-        ];
-    },
 
     _getGridConfig: function(config) {
         return Ext.apply({
@@ -144,9 +133,9 @@ Ext.define('Rally.apps.releasesummary.App', {
     },
 
     _refreshGrids: function() {
-        var filters = this._getFilters();
-        this.down('#defect-grid').filter(filters, true, true);
-        this.down('#story-grid').filter(filters, true, true);
+        var filter = [this.getContext().getTimeboxScope().getQueryFilter()];
+        this.down('#defect-grid').filter(filter, true, true);
+        this.down('#story-grid').filter(filter, true, true);
     },
 
     _onStoriesDataLoaded: function (store) {
@@ -192,7 +181,7 @@ Ext.define('Rally.apps.releasesummary.App', {
 
         doc.write('</head><body class="landscape">');
         doc.write('<p style="font-family:Arial,Helvetica,sans-serif;margin:5px">Release: ' + release + '</p><br />');
-        doc.write(stories.getEl().dom.innerHTML + defects.getEl().dom.innerHTML + releaseinfo.getEl().dom.innerHTML);
+        doc.write(releaseinfo.getEl().dom.innerHTML + stories.getEl().dom.innerHTML + defects.getEl().dom.innerHTML);
         doc.write('</body></html>');
         doc.close();
 
